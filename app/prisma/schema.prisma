@@ -1,0 +1,215 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["business", "billing", "template", "wedding", "invite"]
+}
+
+enum MagicLinkPurpose {
+  SIGNUP
+  RESET
+
+  @@schema("business")
+}
+
+model Business {
+  id              String      @id @default(cuid())
+  name            String
+  email           String      @unique
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  createdAt       DateTime    @default(now())
+  magicLinks      MagicLink[]
+  sessions        Session[]
+
+  @@schema("business")
+}
+
+model MagicLink {
+  id         String           @id @default(cuid())
+  business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  tokenHash  String           @unique
+  purpose    MagicLinkPurpose
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@schema("business")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  sessionHash String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@schema("business")
+}
+
+enum SubscriptionStatus {
+  NONE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+
+  @@schema("billing")
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String
+  priceMonthly  Int
+  currency      String
+  weddingLimit  Int
+  stripePriceId String?
+  active        Boolean        @default(true)
+  subscriptions Subscription[]
+
+  @@schema("billing")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  businessId           String             @unique
+  plan                 Plan?              @relation(fields: [planId], references: [id])
+  planId               String?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               SubscriptionStatus @default(NONE)
+  currentPeriodEnd     DateTime?
+
+  @@schema("billing")
+}
+
+model StripeEvent {
+  id          String   @id
+  processedAt DateTime @default(now())
+
+  @@schema("billing")
+}
+
+enum DesignKind {
+  EVENT
+  SUMMARY
+
+  @@schema("template")
+}
+
+model Package {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  previewImageUrl String?
+  active          Boolean  @default(true)
+  designs         Design[]
+
+  @@schema("template")
+}
+
+model Design {
+  id              String     @id @default(cuid())
+  package         Package    @relation(fields: [packageId], references: [id])
+  packageId       String
+  key             String     @unique
+  name            String
+  kind            DesignKind
+  eventType       String?
+  guestType       String?
+  previewImageUrl String?
+  active          Boolean    @default(true)
+
+  @@schema("template")
+}
+
+enum EventSide {
+  BRIDE
+  GROOM
+  BOTH
+
+  @@schema("wedding")
+}
+
+model Wedding {
+  id                     String   @id @default(cuid())
+  businessId             String
+  slug                   String   @unique
+  brideName              String
+  groomName              String
+  packageId              String
+  showDefaultPageWhenOff Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  events                 Event[]
+
+  @@index([businessId])
+  @@schema("wedding")
+}
+
+model Event {
+  id        String    @id @default(cuid())
+  wedding   Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  weddingId String
+  name      String
+  side      EventSide @default(BOTH)
+  venue     String
+  address   String?
+  mapUrl    String?
+  startsAt  DateTime
+  dressCode String?
+  note      String?
+  designId  String
+  sortOrder Int       @default(0)
+
+  @@schema("wedding")
+}
+
+enum LinkType {
+  SUMMARY
+  SINGLE_EVENT
+
+  @@schema("invite")
+}
+
+enum InvitedBy {
+  BRIDE
+  GROOM
+  BOTH
+
+  @@schema("invite")
+}
+
+model InviteLink {
+  id            String            @id @default(cuid())
+  weddingId     String
+  token         String            @unique
+  type          LinkType
+  side          InvitedBy         @default(BOTH)
+  audienceLabel String?
+  designId      String?
+  customText    String?
+  enabled       Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  events        InviteLinkEvent[]
+
+  @@index([weddingId])
+  @@schema("invite")
+}
+
+model InviteLinkEvent {
+  id        String     @id @default(cuid())
+  link      InviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkId    String
+  eventId   String
+  sortOrder Int        @default(0)
+  invitedBy InvitedBy?
+  startsAt  DateTime?
+
+  @@unique([linkId, eventId])
+  @@schema("invite")
+}

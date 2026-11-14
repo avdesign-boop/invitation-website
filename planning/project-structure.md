@@ -1,0 +1,79 @@
+# Project Structure and Low-Level Flow
+
+The code lives in `app/` (one Next.js 15 app, TypeScript, App Router, Tailwind CSS 3, Prisma, Postgres, Zod). One server runs everything.
+
+## Folders
+- `app/app/` : Next.js routes only. `api/` holds the JSON endpoints. `w/[slug]/i/[token]/page.tsx` is the guest invite page. `page.tsx` and `layout.tsx` are the site root.
+- `app/middleware.ts` : maps `{slug}.ROOT_DOMAIN/i/{token}` to `/w/{slug}/i/{token}`. It does nothing when `ROOT_DOMAIN` is not set.
+- `app/lib/` : shared helpers used by every service.
+  - `call.ts` : the shared caller function (`register`, `call`) and the per-operation HTTP rules.
+  - `db.ts` : the Prisma client, `withTransaction` and `isUniqueViolation`.
+  - `errors.ts` : `AppError(status, message)`.
+  - `http.ts` : `handle` (turns errors into responses) and the route builders `authedRoute` and `publicRoute`.
+- `app/services/` : one folder per service: `business`, `billing`, `template`, `wedding`, `invite`, `rendering`, `entry`. `services/index.ts` imports every service so all operations are registered.
+- `app/prisma/` : `schema.prisma` (one Postgres schema per service) and `seed.ts`.
+- `planning/` : design documents. `HLD.md` and `LLD.md` are in the folder above.
+
+## Entry point
+Every API route file starts by importing `@/lib/http`, which imports `@/services`. That registers every operation with the caller function before the route runs. The guest page imports `@/services` itself.
+
+## How a service is written
+Each service folder has the same pieces:
+- `service.ts` : the functions that do the work and read or write the service's own tables.
+- `index.ts` : declares each operation's input and output types (in the `Operations` interface of `@/lib/call`) and registers each function with `register`, with its HTTP rules where it is exposed as an API. This file is the service's public interface.
+- `types.ts` : types shared inside the service and returned by its operations.
+- `schemas.ts` : Zod schemas that validate request bodies. `index.ts` attaches them to operations.
+- Extra files only where needed (`crypto.ts` and `mailer.ts` in business, `token.ts` in invite, `slug.ts` in wedding, `catalog.ts` and `designs/` in template, page components in rendering).
+
+Rules:
+- A service reads only its own tables. To get anything from another service it uses `call("service.operation", input)`.
+- Types for an operation live in its `index.ts`, so `call` is fully typed.
+- Services throw `AppError(status, message)` for expected failures.
+
+## How a request flows
+1. A route file in `app/app/api/...` only names the operation: `export const POST = publicRoute("business.login")` or `authedRoute("wedding.create")`. The exported name is the HTTP method.
+2. The service's `index.ts` registers the operation with its HTTP rules (`register(name, handler, meta)`):
+   - `schema` : Zod schema for the body (or the query string on GET), imported from the service's `schemas.ts`.
+   - `idParam` : the input field that receives the `[id]` from the URL (for example `weddingId`).
+   - `status` : success status, default 200.
+   - `message` : respond `{ message }` instead of the result.
+   - `notFound` : error when the result is empty (404, or a given status and message).
+   - `sessionInput` and `clearSession` : read the session id from the cookie into the input, and clear the cookie after the call.
+3. `lib/http.ts` builds the input and calls the operation: `businessId` (authed routes only, from `requireBusinessId` in `services/entry/session.ts`), the URL id, the session id if asked, then the validated body.
+4. The service function runs, using `db` for its own tables and `call` for other services.
+5. `lib/http.ts` sends the result as JSON. If the result has a `session` field (`{ id, expiresAt }`), it sets the session cookie and leaves the field out of the response. The cookie helpers are in `services/entry/session.ts`.
+6. `handle` turns an `AppError` into `{ error }` with its status, a Zod error into 400, and anything else into a logged 500.
+
+## Where things are
+- API routes: `app/app/api/`
+  - business: `api/business/*` (signup, set-password, login, forgot-password, logout, me)
+  - packages: `api/packages`, `api/packages/[id]`
+  - weddings: `api/weddings`, `api/weddings/slug-check`, `api/weddings/[id]`, `api/weddings/[id]/events`, `api/weddings/[id]/events/order`, `api/weddings/[id]/links`
+  - events: `api/events/[id]`
+  - links: `api/links/[id]`, `api/links/[id]/copy`, `api/links/[id]/enabled`
+- Operation types: each service's `index.ts`
+- Database tables: `app/prisma/schema.prisma`, with the schema (`business`, `billing`, `template`, `wedding`, `invite`) set per model
+- Request validation: each service's `schemas.ts`
+- Design pages (coded invitations): `services/template/designs/`, registered by key in `designs/index.ts`
+- Package and design catalog used by the seed: `services/template/catalog.ts`
+
+## Guest link flow
+1. `GET /w/{slug}/i/{token}` hits `app/app/w/[slug]/i/[token]/page.tsx`. On a launch host, `middleware.ts` rewrites to this path first.
+2. The page calls `rendering.resolveInvite` with the slug and token.
+3. `services/rendering/service.ts` calls `wedding.findBySlug`, then `invite.getForRender`, then `wedding.getEvents`, then `template.getDesign`.
+4. It returns one of three results:
+   - `redirect` : the page redirects to `COMPANY_URL` (default `/`).
+   - `default` : the page shows `DefaultPage` with the couple's names.
+   - `page` : the design key and the data (names, custom text, events with the link's time and invited-by applied).
+5. For `page`, the guest page finds the coded component with `getDesignComponent(designKey)` and renders it on the server. A missing component or any error shows `ErrorPage`.
+
+## Environment
+- `DATABASE_URL` : Postgres connection.
+- `APP_URL` : base address used for invite links in the demo.
+- `ROOT_DOMAIN` : when set, invite links use `{slug}.ROOT_DOMAIN` and `middleware.ts` handles them.
+- `COMPANY_URL` : where missing or turned-off links redirect.
+
+## Demo versus launch
+- Billing reads the Subscription row. The demo seed writes an ACTIVE row; Stripe will write the same row later.
+- `services/business/mailer.ts` prints magic links in the server log. Email sending replaces this file's body later.
+- Demo data lives only in `prisma/seed-demo.ts` (run with `npm run seed:demo`): a demo business with an ACTIVE subscription, one wedding with five events, and five invite links. `prisma/seed.ts` seeds only the package and designs, which stay at launch.
