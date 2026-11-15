@@ -27,7 +27,7 @@ GET /api/packages
 GET /api/packages/{id}
 { Cookie: session }
 { }
-{ 200: { id, name, description, previewImageUrl, designs: [ { id, name, kind, eventType, guestType, previewImageUrl } ] } | 404: { error: "not found" } }
+{ 200: { id, name, description, previewImageUrl, designs: [ { id, key, name, kind, eventType, guestType, previewImageUrl } ] } | 404: { error: "not found" } }
 
 ## Internal calls (through the shared caller function)
 - `template.getDesign` takes { designId } and returns { id, packageId, key, kind, eventType } or nothing.

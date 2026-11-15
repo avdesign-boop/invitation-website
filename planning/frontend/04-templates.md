@@ -8,5 +8,5 @@
 ## Needs from backend
 Template.
 
-## To decide
-- Preview format (images, or a live demo page with sample data)
+## Previews
+Each design is shown as a live page with sample data, inside a phone-sized frame.

@@ -11,6 +11,7 @@ export type PackageSummary = {
 
 export type PackageDesign = {
   id: string;
+  key: string;
   name: string;
   kind: DesignKind;
   eventType: string | null;
@@ -66,6 +67,7 @@ export async function getPackage(input: { packageId: string }): Promise<PackageD
     previewImageUrl: found.previewImageUrl,
     designs: found.designs.map((d) => ({
       id: d.id,
+      key: d.key,
       name: d.name,
       kind: d.kind,
       eventType: d.eventType,

@@ -11,7 +11,7 @@ import {
   type SessionGrant,
 } from "@/services/entry/session";
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = { params: Promise<Record<string, string>> };
 
 export function handle<C = unknown>(
   fn: (request: NextRequest, context: C) => Promise<NextResponse>,
