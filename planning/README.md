@@ -45,6 +45,7 @@ Related flow: [backend/10-link-open-flow.md](backend/10-link-open-flow.md) (what
 - [decisions.md](decisions.md): decisions made and open questions
 - [end-to-end-flow.md](end-to-end-flow.md): the whole journey, step by step
 - [build-plan.md](build-plan.md): the order to build in, with done-when checks
+- [demo.md](demo.md): the demo settings, sample data, and how to switch it off
 
 ## Working rules (from Claude.md)
 Ask before infra changes and before running tools. Summary after every code change. Keep HLD.md and LLD.md updated. No code comments unless asked.

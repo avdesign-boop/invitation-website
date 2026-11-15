@@ -6,6 +6,7 @@
 3. Invite links. For a single-event link: choose the event, invited by, and time. For a summary link: choose the summary design, the events, and for each event the invited by and time. Both types also take an audience label and custom text
 4. Preview an invite
 5. Copy link to send to the couple
+6. Delete the wedding, after a confirmation. This also removes its events and invite links, and shared links stop working
 
 ## Event name suggestions
 When the business types an event name, the editor suggests common Indian wedding events (for example Roka, Sagai, Tilak, Mehendi, Haldi, Sangeet, Baraat, Wedding Ceremony, Reception). The list is kept in the frontend and the business can still type any name. The suggestion also picks the matching event design from the package.

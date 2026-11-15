@@ -4,9 +4,9 @@ The code lives in `app/` (one Next.js 15 app, TypeScript, App Router, Tailwind C
 
 ## Folders
 - `app/app/` : Next.js routes only. `api/` holds the JSON endpoints. `w/[slug]/i/[token]/page.tsx` is the guest invite page. `page.tsx` and `layout.tsx` are the site root.
-  - `login/` : business login page.
-  - `dashboard/` : the business screens, all client pages that call the `/api` endpoints. `layout.tsx` checks the session with `GET /api/business/me` and sends the visitor to `/login` if there is none. `page.tsx` lists weddings with a New wedding button. `weddings/new/` creates a wedding (couple names, invite address with a live availability check, package). `templates/` lists packages and shows each design as a live preview. `weddings/[id]/` edits the couple's names and each event (add, edit, delete: name, date and time, venue, address, map link, dress code, note, invited by, design), with a live preview, and manages the wedding's invite links.
-- `app/components/` : shared screen parts. `DesignPreview` renders a coded design inside a phone-sized frame. `sampleData.ts` holds sample data for the template previews. `LinkManager` creates, copies, turns on or off, and deletes invite links.
+  - `login/`, `signup/`, `set-password/`, `forgot-password/` : the business account pages. Sign-up and forgot-password ask for an email and say a link was sent. `set-password` reads the token from the link, checks the two passwords match (at least 8 characters), then goes to login.
+  - `dashboard/` : the business screens, all client pages that call the `/api` endpoints. `layout.tsx` checks the session with `GET /api/business/me` and sends the visitor to `/login` if there is none. `page.tsx` lists weddings with a New wedding button. `weddings/new/` creates a wedding (couple names, invite address with a live availability check, package). `templates/` lists packages and shows each design as a live preview. `weddings/[id]/` edits the couple's names and each event (add, edit, delete: name, date and time, venue, address, map link, dress code, note, invited by, design), with a live preview, manages the wedding's invite links, and deletes the wedding after a confirmation.
+- `app/components/` : shared screen parts. `DesignPreview` renders a coded design inside a phone-sized frame. `sampleData.ts` holds sample data for the template previews. `AuthCard` is the shared wrapper for the account pages. `LinkManager` creates, copies, turns on or off, and deletes invite links.
 - `app/middleware.ts` : maps `{slug}.ROOT_DOMAIN/i/{token}` to `/w/{slug}/i/{token}`. It does nothing when `ROOT_DOMAIN` is not set.
 - `app/lib/` : shared helpers used by every service.
   - `call.ts` : the shared caller function (`register`, `call`) and the per-operation HTTP rules.
@@ -15,6 +15,7 @@ The code lives in `app/` (one Next.js 15 app, TypeScript, App Router, Tailwind C
   - `http.ts` : `handle` (turns errors into responses) and the route builders `authedRoute` and `publicRoute`.
   - `api.ts` : the browser-side `api(method, url, body)` helper used by the dashboard pages.
   - `time.ts` : converts between stored times and the Asia/Kolkata date-time inputs.
+  - `config.ts` : the feature settings (`signupEnabled`, `billingEnabled`, `loginHint`) read from environment variables.
 - `app/services/` : one folder per service: `business`, `billing`, `template`, `wedding`, `invite`, `rendering`, `entry`. `services/index.ts` imports every service so all operations are registered.
 - `app/prisma/` : `schema.prisma` (one Postgres schema per service) and `seed.ts`.
 - `planning/` : design documents. `HLD.md` and `LLD.md` are in the folder above.
@@ -52,6 +53,7 @@ Rules:
 ## Where things are
 - API routes: `app/app/api/`
   - business: `api/business/*` (signup, set-password, login, forgot-password, logout, me)
+  - config: `api/config` (tells the login page whether sign-up is on and returns the login hint, if set)
   - packages: `api/packages`, `api/packages/[id]`
   - weddings: `api/weddings`, `api/weddings/slug-check`, `api/weddings/[id]`, `api/weddings/[id]/events`, `api/weddings/[id]/events/order`, `api/weddings/[id]/links`
   - events: `api/events/[id]`
@@ -80,5 +82,6 @@ Rules:
 
 ## Demo versus launch
 - Billing reads the Subscription row. The demo seed writes an ACTIVE row; Stripe will write the same row later.
-- `services/business/mailer.ts` prints magic links in the server log. Email sending replaces this file's body later.
-- Demo data lives only in `prisma/seed-demo.ts` (run with `npm run seed:demo`): a demo business with an ACTIVE subscription, one wedding with five events, and five invite links. `prisma/seed.ts` seeds only the package and designs, which stay at launch.
+- `services/business/mailer.ts` emails magic links through Resend's HTTP API when `RESEND_API_KEY` and `EMAIL_FROM` are set, and prints them in the server log otherwise.
+- Demo data lives only in `app/demo/` (`data.json` and `seed.ts`; see `planning/demo.md`). `prisma/seed.ts` seeds only the package and designs, which stay at launch.
+- Feature settings (`SIGNUP_ENABLED`, `BILLING_ENABLED`, `LOGIN_HINT_EMAIL`, `LOGIN_HINT_PASSWORD`) are read in `lib/config.ts`. Only the business service (sign-up), the billing service and `api/config` use them.

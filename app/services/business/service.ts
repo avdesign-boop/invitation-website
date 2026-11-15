@@ -1,6 +1,7 @@
 import type { MagicLinkPurpose } from "@prisma/client";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { signupEnabled } from "@/lib/config";
 import { hashPassword, randomToken, sha256, verifyPassword } from "./crypto";
 import { sendMagicLink } from "./mailer";
 import type { BusinessSummary } from "./types";
@@ -17,6 +18,12 @@ function normalizeEmail(email: string): string {
 
 function appUrl(): string {
   return process.env.APP_URL ?? "http://localhost:3000";
+}
+
+function assertSignupEnabled(): void {
+  if (!signupEnabled()) {
+    throw new AppError(403, "sign-up is turned off");
+  }
 }
 
 function summary(business: { id: string; name: string; email: string }): BusinessSummary {
@@ -37,10 +44,16 @@ async function issueMagicLink(
       expiresAt: new Date(Date.now() + MAGIC_LINK_MINUTES * 60 * 1000),
     },
   });
-  await sendMagicLink(email, `${appUrl()}/set-password?token=${token}`);
+  await sendMagicLink({
+    email,
+    url: `${appUrl()}/set-password?token=${token}`,
+    purpose,
+    expiresInMinutes: MAGIC_LINK_MINUTES,
+  });
 }
 
 export async function signup(input: { name: string; email: string }): Promise<{ ok: true }> {
+  assertSignupEnabled();
   const email = normalizeEmail(input.email);
   const existing = await db.business.findUnique({ where: { email } });
   if (existing?.passwordHash) {

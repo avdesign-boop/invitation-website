@@ -1,0 +1,130 @@
+{
+  "business": { "name": "Demo Studio" },
+  "plan": { "name": "Demo", "priceMonthly": 999, "currency": "INR", "weddingLimit": 5 },
+  "package": "Royal Marigold",
+  "wedding": {
+    "slug": "aarav-meera",
+    "brideName": "Meera",
+    "groomName": "Aarav",
+    "showDefaultPageWhenOff": true
+  },
+  "events": [
+    {
+      "key": "mehendi",
+      "name": "Mehendi",
+      "side": "BRIDE",
+      "venue": "The Garden Courtyard",
+      "address": "12 Lotus Lane, Jaipur",
+      "startsAt": "2027-02-10T16:00:00+05:30",
+      "dressCode": "Green and yellow",
+      "note": "Henna artists and snacks all afternoon",
+      "design": "royal-mehendi"
+    },
+    {
+      "key": "haldi",
+      "name": "Haldi",
+      "side": "BOTH",
+      "venue": "Marigold Lawns",
+      "address": "7 Palace Road, Jaipur",
+      "startsAt": "2027-02-11T10:00:00+05:30",
+      "dressCode": "Yellow, clothes you do not mind staining",
+      "note": null,
+      "design": "royal-haldi"
+    },
+    {
+      "key": "sangeet",
+      "name": "Sangeet",
+      "side": "BOTH",
+      "venue": "Rambagh Ballroom",
+      "address": "Bhawani Singh Road, Jaipur",
+      "startsAt": "2027-02-11T19:00:00+05:30",
+      "dressCode": "Festive and glamorous",
+      "note": "Performances followed by dinner",
+      "design": "royal-sangeet"
+    },
+    {
+      "key": "wedding",
+      "name": "Wedding Ceremony",
+      "side": "BOTH",
+      "venue": "Amber Fort Grounds",
+      "address": "Amer, Jaipur",
+      "startsAt": "2027-02-12T18:30:00+05:30",
+      "dressCode": "Traditional",
+      "note": "Baraat arrives at 6:30 PM",
+      "design": "royal-wedding"
+    },
+    {
+      "key": "reception",
+      "name": "Reception",
+      "side": "GROOM",
+      "venue": "The Grand Pavilion",
+      "address": "Civil Lines, Jaipur",
+      "startsAt": "2027-02-13T20:00:00+05:30",
+      "dressCode": "Cocktail",
+      "note": null,
+      "design": "royal-reception"
+    }
+  ],
+  "links": [
+    {
+      "token": "demo-close-family",
+      "type": "SUMMARY",
+      "side": "BOTH",
+      "audienceLabel": "Close family",
+      "design": "royal-summary-family",
+      "customText": "We would love to have you with us for every celebration.",
+      "enabled": true,
+      "events": [
+        { "event": "mehendi" },
+        { "event": "haldi" },
+        { "event": "sangeet" },
+        { "event": "wedding" },
+        { "event": "reception" }
+      ]
+    },
+    {
+      "token": "demo-friends",
+      "type": "SUMMARY",
+      "side": "GROOM",
+      "audienceLabel": "Groom's friends",
+      "design": "royal-summary-friends",
+      "customText": null,
+      "enabled": true,
+      "events": [
+        { "event": "sangeet", "startsAt": "2027-02-11T19:30:00+05:30" },
+        { "event": "wedding", "invitedBy": "GROOM" },
+        { "event": "reception", "invitedBy": "GROOM" }
+      ]
+    },
+    {
+      "token": "demo-mehendi",
+      "type": "SINGLE_EVENT",
+      "side": "BRIDE",
+      "audienceLabel": "Bride's cousins",
+      "design": null,
+      "customText": null,
+      "enabled": true,
+      "events": [{ "event": "mehendi" }]
+    },
+    {
+      "token": "demo-wedding",
+      "type": "SINGLE_EVENT",
+      "side": "GROOM",
+      "audienceLabel": "Groom's colleagues",
+      "design": null,
+      "customText": null,
+      "enabled": true,
+      "events": [{ "event": "wedding", "startsAt": "2027-02-12T19:00:00+05:30", "invitedBy": "GROOM" }]
+    },
+    {
+      "token": "demo-turned-off",
+      "type": "SINGLE_EVENT",
+      "side": "BOTH",
+      "audienceLabel": "Turned off sample",
+      "design": null,
+      "customText": null,
+      "enabled": false,
+      "events": [{ "event": "reception" }]
+    }
+  ]
+}

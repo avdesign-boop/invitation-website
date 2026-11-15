@@ -33,9 +33,14 @@ TypeScript with Next.js (App Router) and React for the dashboard and invite page
 ## Hosting (demo)
 Vercel free tier for the app and Neon free tier for Postgres. No domain changes for the demo.
 
-## Demo shortcuts
-- Magic links are printed in the server log instead of emailed.
-- Stripe is not connected. A demo business is marked as having an ACTIVE subscription.
+## Feature settings
+Environment settings turn features on or off with no code changes:
+- `SIGNUP_ENABLED` (default on): off blocks business sign-up.
+- `BILLING_ENABLED` (default on): off lets every business create weddings and does not use Stripe.
+- `LOGIN_HINT_EMAIL` and `LOGIN_HINT_PASSWORD` (default unset): when both are set, the login page shows that account with a button that fills it in.
+- `RESEND_API_KEY` and `EMAIL_FROM`: when unset, magic links are printed in the server log.
+
+A demo is one combination of these settings plus the sample data in `app/demo/`. See `planning/demo.md`.
 
 ## Data and storage
 - Postgres for core data, with one schema per service so each service owns its tables.

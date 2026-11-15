@@ -2,8 +2,8 @@
 
 **Purpose:** businesses pay for our product and get plan limits. Payments run through Stripe.
 
-## Demo
-Stripe is not connected. A demo business has an ACTIVE Subscription set directly in the database, so the wedding limit check passes. The checkout, portal and webhook APIs are built after the demo.
+## Billing switch
+With `BILLING_ENABLED` off, `billing.canCreateWedding` always allows and Stripe is not used. The checkout, portal and webhook APIs are built after the demo.
 
 ## Pricing
 Monthly plans. Each plan has a price and a limit on the number of weddings. No free trial. Limits are configurable so a per-wedding add-on can be added later.

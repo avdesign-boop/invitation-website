@@ -4,7 +4,7 @@
 - Stack: Next.js, Postgres with Prisma, Stripe. Start as one app, split into services later if needed.
 - No RSVP.
 - Demo addresses carry the slug in the path: `<app-url>/w/{slug}/i/{token}`. At launch they use `{slug}.<our-domain>/i/{token}`. The Entry layer supports both.
-- Demo shortcuts: magic links are printed in the server log instead of emailed, and Stripe is not connected (a demo business is set to ACTIVE directly).
+- Feature settings: `SIGNUP_ENABLED`, `BILLING_ENABLED` and `LOGIN_HINT_EMAIL` / `LOGIN_HINT_PASSWORD` turn sign-up, billing and a login hint on or off with no code changes. A demo is one combination of these settings plus the sample data in `app/demo/` (see `planning/demo.md`).
 - Demo hosting: Vercel free tier for the app, Neon free tier for Postgres, no domain changes. At launch we add the wildcard subdomain and move the domain's nameservers to Vercel or Cloudflare.
 - Events are tagged bride, groom or both.
 - No guest list and no per-guest links. The business creates invite links, the couple shares them.
@@ -22,6 +22,7 @@
 - Business login: sign up and password reset by magic link (one use, 30 minutes), login by email and password. The session is a random ID in a cookie, lasts 30 days, and is checked by the Entry layer against the Session table. A password change ends all sessions.
 - Deleting a wedding is one endpoint that removes its invite links and the wedding together, all or nothing.
 - One email per business. No team access in MVP.
+- Email: magic links are sent through Resend's HTTP API. When `RESEND_API_KEY` and `EMAIL_FROM` are not set, the link is printed in the server log.
 - Pricing: monthly plans with a limit on active weddings per plan. Plan limits are configurable so a per-wedding add-on can be added later.
 - Billing: Stripe checkout and customer portal, no free trial. Every wedding not deleted counts toward the plan limit. If a plan lapses, existing invites keep working and new weddings are blocked.
 - A turned-off link shows the wedding's default page if the business enabled it, otherwise redirects to our company website. A link that does not exist redirects to our company website.
@@ -30,7 +31,7 @@
 - No code until HLD and LLD are complete.
 
 ## Open
-- Email provider and sender address for magic links (not set up yet)
+- Email setup before launch: a Resend account, a verified sender domain (SPF and DKIM records at the DNS provider), and the `RESEND_API_KEY` and `EMAIL_FROM` values
 - How we create and add our packages and designs
 - All-or-nothing deletes if services are split into separate programs
 - How packages are priced: included in a plan, or sold separately

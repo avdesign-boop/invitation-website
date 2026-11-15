@@ -1,8 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { AuthButton, AuthCard, authInputClass } from "@/components/AuthCard";
 import { api } from "@/lib/api";
+
+type LoginSettings = {
+  signupEnabled: boolean;
+  loginHint: { email: string; password: string } | null;
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +17,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [settings, setSettings] = useState<LoginSettings>({ signupEnabled: true, loginHint: null });
+
+  useEffect(() => {
+    api<LoginSettings>("GET", "/api/config")
+      .then(setSettings)
+      .catch(() => undefined);
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -24,19 +38,14 @@ export default function LoginPage() {
     }
   }
 
+  const hint = settings.loginHint;
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-stone-50 px-6">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-stone-900">Business login</h1>
+    <AuthCard title="Business login">
+      <form onSubmit={submit} className="space-y-4">
         <label className="block text-sm text-stone-700">
           Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
-          />
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={authInputClass} />
         </label>
         <label className="block text-sm text-stone-700">
           Password
@@ -44,19 +53,40 @@ export default function LoginPage() {
             type="password"
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
+            onChange={(e) => setPassword(e.target.value)}
+            className={authInputClass}
           />
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-lg bg-amber-700 px-4 py-2 text-white hover:bg-amber-800 disabled:opacity-60"
-        >
-          {busy ? "Signing in..." : "Sign in"}
-        </button>
+        <AuthButton busy={busy} label="Sign in" busyLabel="Signing in..." />
       </form>
-    </main>
+      {hint && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-stone-700">
+          <p className="font-medium">Try this account</p>
+          <p>{hint.email}</p>
+          <p>{hint.password}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(hint.email);
+              setPassword(hint.password);
+            }}
+            className="mt-2 text-amber-700 hover:underline"
+          >
+            Fill in these details
+          </button>
+        </div>
+      )}
+      <div className="flex justify-between text-sm">
+        <Link href="/forgot-password" className="text-amber-700 hover:underline">
+          Forgot password?
+        </Link>
+        {settings.signupEnabled && (
+          <Link href="/signup" className="text-amber-700 hover:underline">
+            Create an account
+          </Link>
+        )}
+      </div>
+    </AuthCard>
   );
 }
