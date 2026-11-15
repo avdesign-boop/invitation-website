@@ -24,7 +24,7 @@ Build in order. Each step lists what to build, where the details live, and how t
 ## Step 2: Business service
 **Status:** done, including the sign-up, login, set-password and forgot-password pages.
 
-**Build** signup, set-password, login, forgot-password, logout, me, and `business.validateSession`. Magic links print in the server log. Details: `backend/01-accounts.md`.
+**Build** signup, set-password, login, forgot-password, logout, me, and `business.validateSession`. Magic links are emailed through Resend when configured, otherwise printed in the server log. Details: `backend/01-accounts.md`.
 
 **Done when** a business can sign up from the log link, set a password, log in, see `me`, and log out. A password change ends other sessions.
 
@@ -86,4 +86,4 @@ Details: `backend/06-invitation-rendering.md`, `backend/07-domain.md`, `backend/
 **Done when** your partner can open the demo and a sample invite link.
 
 ## After the demo
-Stripe checkout, portal and webhook, email sending, wildcard subdomain addresses, analytics, custom domains. See `decisions.md` for open points.
+Stripe checkout, portal and webhook, email setup (Resend account and sender domain), wildcard subdomain addresses, analytics, custom domains. See `decisions.md` for open points.

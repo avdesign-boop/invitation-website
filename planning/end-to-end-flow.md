@@ -49,11 +49,11 @@ Every request from the browser enters through the Entry layer. For dashboard cal
 Not-found and turned-off cases are described in `backend/10-link-open-flow.md`.
 
 ## Demo shortcuts
-- Sign-up and password-reset magic links are printed in the server log instead of emailed.
+- Sign-up and password-reset magic links are printed in the server log unless an email provider is configured.
 - The plan and payment steps in section 1 are skipped. A demo business has an ACTIVE Subscription set directly in the database.
 
 ## Open points
-1. Email provider and sender address for magic links.
+1. Email setup before launch: a Resend account, a verified sender domain, the API key and the sender address.
 2. How we create and add our packages and designs.
 3. How packages are priced: included in a plan, or sold separately.
 4. Whether a wedding's package can change after events exist.

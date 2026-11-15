@@ -16,7 +16,7 @@ Rules:
 - Each magic link works once and expires in 30 minutes.
 - No Google sign-in.
 - Setting a new password ends all of the business's existing sessions.
-- Demo: the magic link is printed in the server log instead of emailed.
+- Magic links are emailed through Resend when `RESEND_API_KEY` and `EMAIL_FROM` are set. Otherwise the link is printed in the server log.
 
 One email per business. No team access in MVP.
 

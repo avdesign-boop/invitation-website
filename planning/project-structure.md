@@ -80,5 +80,5 @@ Rules:
 
 ## Demo versus launch
 - Billing reads the Subscription row. The demo seed writes an ACTIVE row; Stripe will write the same row later.
-- `services/business/mailer.ts` prints magic links in the server log. Email sending replaces this file's body later.
+- `services/business/mailer.ts` emails magic links through Resend's HTTP API when `RESEND_API_KEY` and `EMAIL_FROM` are set, and prints them in the server log otherwise.
 - Demo data lives only in `prisma/seed-demo.ts` (run with `npm run seed:demo`): a demo business with an ACTIVE subscription, one wedding with five events, and five invite links. `prisma/seed.ts` seeds only the package and designs, which stay at launch.

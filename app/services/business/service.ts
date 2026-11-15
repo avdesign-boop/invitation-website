@@ -37,7 +37,12 @@ async function issueMagicLink(
       expiresAt: new Date(Date.now() + MAGIC_LINK_MINUTES * 60 * 1000),
     },
   });
-  await sendMagicLink(email, `${appUrl()}/set-password?token=${token}`);
+  await sendMagicLink({
+    email,
+    url: `${appUrl()}/set-password?token=${token}`,
+    purpose,
+    expiresInMinutes: MAGIC_LINK_MINUTES,
+  });
 }
 
 export async function signup(input: { name: string; email: string }): Promise<{ ok: true }> {

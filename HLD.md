@@ -34,7 +34,7 @@ TypeScript with Next.js (App Router) and React for the dashboard and invite page
 Vercel free tier for the app and Neon free tier for Postgres. No domain changes for the demo.
 
 ## Demo shortcuts
-- Magic links are printed in the server log instead of emailed.
+- Magic links are printed in the server log unless an email provider is configured.
 - Stripe is not connected. A demo business is marked as having an ACTIVE subscription.
 
 ## Data and storage
