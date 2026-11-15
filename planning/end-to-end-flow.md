@@ -48,9 +48,8 @@ Every request from the browser enters through the Entry layer. For dashboard cal
 
 Not-found and turned-off cases are described in `backend/10-link-open-flow.md`.
 
-## Demo shortcuts
-- Sign-up and password-reset magic links are printed in the server log unless an email provider is configured.
-- The plan and payment steps in section 1 are skipped. A demo business has an ACTIVE Subscription set directly in the database.
+## Demo
+A demo skips the register, plan and payment steps in section 1 by using the settings and sample data described in `demo.md`.
 
 ## Open points
 1. Email setup before launch: a Resend account, a verified sender domain, the API key and the sender address.

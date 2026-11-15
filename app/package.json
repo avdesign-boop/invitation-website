@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:demo": "tsx prisma/seed-demo.ts",
-    "postinstall": "prisma generate"
+    "seed:demo": "tsx demo/seed.ts",
+    "postinstall": "prisma generate",
+    "demo:reset": "tsx demo/seed.ts --reset"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

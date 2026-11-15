@@ -69,6 +69,8 @@ Details: `backend/06-invitation-rendering.md`, `backend/07-domain.md`, `backend/
 
 **Build** a demo seed: a demo business set to ACTIVE, one wedding with its events and several links (a summary link and single-event links, with different times and invited by).
 
+The demo data is in `app/demo/`. The settings and commands are in `demo.md`.
+
 **Done when** the whole flow in `end-to-end-flow.md` runs from sign-up to viewing the invite.
 
 ## Step 8: Frontend screens

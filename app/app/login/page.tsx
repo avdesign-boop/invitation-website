@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { AuthButton, AuthCard, authInputClass } from "@/components/AuthCard";
 import { api } from "@/lib/api";
+
+type LoginSettings = {
+  signupEnabled: boolean;
+  loginHint: { email: string; password: string } | null;
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +17,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [settings, setSettings] = useState<LoginSettings>({ signupEnabled: true, loginHint: null });
+
+  useEffect(() => {
+    api<LoginSettings>("GET", "/api/config")
+      .then(setSettings)
+      .catch(() => undefined);
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -25,6 +37,8 @@ export default function LoginPage() {
       setBusy(false);
     }
   }
+
+  const hint = settings.loginHint;
 
   return (
     <AuthCard title="Business login">
@@ -46,13 +60,32 @@ export default function LoginPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <AuthButton busy={busy} label="Sign in" busyLabel="Signing in..." />
       </form>
+      {hint && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-stone-700">
+          <p className="font-medium">Try this account</p>
+          <p>{hint.email}</p>
+          <p>{hint.password}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(hint.email);
+              setPassword(hint.password);
+            }}
+            className="mt-2 text-amber-700 hover:underline"
+          >
+            Fill in these details
+          </button>
+        </div>
+      )}
       <div className="flex justify-between text-sm">
         <Link href="/forgot-password" className="text-amber-700 hover:underline">
           Forgot password?
         </Link>
-        <Link href="/signup" className="text-amber-700 hover:underline">
-          Create an account
-        </Link>
+        {settings.signupEnabled && (
+          <Link href="/signup" className="text-amber-700 hover:underline">
+            Create an account
+          </Link>
+        )}
       </div>
     </AuthCard>
   );

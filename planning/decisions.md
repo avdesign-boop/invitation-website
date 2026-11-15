@@ -4,7 +4,7 @@
 - Stack: Next.js, Postgres with Prisma, Stripe. Start as one app, split into services later if needed.
 - No RSVP.
 - Demo addresses carry the slug in the path: `<app-url>/w/{slug}/i/{token}`. At launch they use `{slug}.<our-domain>/i/{token}`. The Entry layer supports both.
-- Demo shortcuts: magic links are printed in the server log unless an email provider is configured, and Stripe is not connected (a demo business is set to ACTIVE directly).
+- Feature settings: `SIGNUP_ENABLED`, `BILLING_ENABLED` and `LOGIN_HINT_EMAIL` / `LOGIN_HINT_PASSWORD` turn sign-up, billing and a login hint on or off with no code changes. A demo is one combination of these settings plus the sample data in `app/demo/` (see `planning/demo.md`).
 - Demo hosting: Vercel free tier for the app, Neon free tier for Postgres, no domain changes. At launch we add the wildcard subdomain and move the domain's nameservers to Vercel or Cloudflare.
 - Events are tagged bride, groom or both.
 - No guest list and no per-guest links. The business creates invite links, the couple shares them.

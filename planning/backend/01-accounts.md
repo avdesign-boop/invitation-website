@@ -17,6 +17,7 @@ Rules:
 - No Google sign-in.
 - Setting a new password ends all of the business's existing sessions.
 - Magic links are emailed through Resend when `RESEND_API_KEY` and `EMAIL_FROM` are set. Otherwise the link is printed in the server log.
+- With `SIGNUP_ENABLED` off, sign-up returns 403 "sign-up is turned off".
 
 One email per business. No team access in MVP.
 

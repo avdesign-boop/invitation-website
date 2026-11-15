@@ -15,6 +15,7 @@ The code lives in `app/` (one Next.js 15 app, TypeScript, App Router, Tailwind C
   - `http.ts` : `handle` (turns errors into responses) and the route builders `authedRoute` and `publicRoute`.
   - `api.ts` : the browser-side `api(method, url, body)` helper used by the dashboard pages.
   - `time.ts` : converts between stored times and the Asia/Kolkata date-time inputs.
+  - `config.ts` : the feature settings (`signupEnabled`, `billingEnabled`, `loginHint`) read from environment variables.
 - `app/services/` : one folder per service: `business`, `billing`, `template`, `wedding`, `invite`, `rendering`, `entry`. `services/index.ts` imports every service so all operations are registered.
 - `app/prisma/` : `schema.prisma` (one Postgres schema per service) and `seed.ts`.
 - `planning/` : design documents. `HLD.md` and `LLD.md` are in the folder above.
@@ -52,6 +53,7 @@ Rules:
 ## Where things are
 - API routes: `app/app/api/`
   - business: `api/business/*` (signup, set-password, login, forgot-password, logout, me)
+  - config: `api/config` (tells the login page whether sign-up is on and returns the login hint, if set)
   - packages: `api/packages`, `api/packages/[id]`
   - weddings: `api/weddings`, `api/weddings/slug-check`, `api/weddings/[id]`, `api/weddings/[id]/events`, `api/weddings/[id]/events/order`, `api/weddings/[id]/links`
   - events: `api/events/[id]`
@@ -81,4 +83,5 @@ Rules:
 ## Demo versus launch
 - Billing reads the Subscription row. The demo seed writes an ACTIVE row; Stripe will write the same row later.
 - `services/business/mailer.ts` emails magic links through Resend's HTTP API when `RESEND_API_KEY` and `EMAIL_FROM` are set, and prints them in the server log otherwise.
-- Demo data lives only in `prisma/seed-demo.ts` (run with `npm run seed:demo`): a demo business with an ACTIVE subscription, one wedding with five events, and five invite links. `prisma/seed.ts` seeds only the package and designs, which stay at launch.
+- Demo data lives only in `app/demo/` (`data.json` and `seed.ts`; see `planning/demo.md`). `prisma/seed.ts` seeds only the package and designs, which stay at launch.
+- Feature settings (`SIGNUP_ENABLED`, `BILLING_ENABLED`, `LOGIN_HINT_EMAIL`, `LOGIN_HINT_PASSWORD`) are read in `lib/config.ts`. Only the business service (sign-up), the billing service and `api/config` use them.
