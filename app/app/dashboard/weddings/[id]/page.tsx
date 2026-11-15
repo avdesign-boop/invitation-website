@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DesignPreview } from "@/components/DesignPreview";
 import { LinkManager, type LinkItem } from "@/components/LinkManager";
@@ -78,6 +78,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function WeddingEditorPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [wedding, setWedding] = useState<WeddingDetail | null>(null);
   const [pkg, setPkg] = useState<PackageDetail | null>(null);
   const [links, setLinks] = useState<LinkItem[]>([]);
@@ -166,6 +167,22 @@ export default function WeddingEditorPage() {
       await api("DELETE", `/api/events/${event.id}`);
       await load(0);
       setStatus({ kind: "ok", text: `${event.name} deleted` });
+    } catch (failure) {
+      reportFailure(failure);
+    }
+  }
+
+  async function deleteWedding() {
+    if (!wedding) {
+      return;
+    }
+    const title = `${wedding.groomName} & ${wedding.brideName}`;
+    if (!window.confirm(`Delete the wedding of ${title}? Its events and invite links will be deleted too. This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api("DELETE", `/api/weddings/${id}`);
+      router.replace("/dashboard");
     } catch (failure) {
       reportFailure(failure);
     }
@@ -401,6 +418,16 @@ export default function WeddingEditorPage() {
         links={links}
         onChanged={() => load().catch((failure) => reportFailure(failure))}
       />
+
+      <section className="space-y-3 rounded-2xl border border-red-200 bg-white p-5">
+        <h2 className="text-lg font-semibold text-red-700">Delete wedding</h2>
+        <p className="text-sm text-stone-600">
+          This deletes the wedding with all its events and invite links. Links already shared will stop working.
+        </p>
+        <button onClick={deleteWedding} className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50">
+          Delete wedding
+        </button>
+      </section>
     </div>
   );
 }
