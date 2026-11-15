@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/dashboard" className="font-semibold">
               Weddings
@@ -36,15 +36,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               Templates
             </Link>
           </nav>
-          <div className="flex items-center gap-4 text-sm text-stone-600">
-            <span>{name}</span>
-            <button onClick={logout} className="rounded-lg border border-stone-300 px-3 py-1 hover:bg-stone-100">
+          <div className="flex items-center gap-3 text-sm text-stone-600 sm:gap-4">
+            <span className="hidden sm:inline">{name}</span>
+            <button
+              onClick={logout}
+              className="whitespace-nowrap rounded-lg border border-stone-300 px-3 py-1.5 hover:bg-stone-100"
+            >
               Log out
             </button>
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

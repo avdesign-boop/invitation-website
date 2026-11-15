@@ -65,7 +65,11 @@ function eventTypeOf(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-const inputClass = "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm";
+const inputClass =
+  "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm disabled:bg-stone-100 disabled:text-stone-600";
+
+const editButtonClass =
+  "rounded-lg border border-amber-700 px-4 py-2 text-sm text-amber-700 hover:bg-amber-50";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -85,6 +89,8 @@ export default function WeddingEditorPage() {
   const [couple, setCouple] = useState({ brideName: "", groomName: "", showDefaultPageWhenOff: false });
   const [events, setEvents] = useState<EventForm[]>([]);
   const [selected, setSelected] = useState(0);
+  const [editingCouple, setEditingCouple] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -140,7 +146,7 @@ export default function WeddingEditorPage() {
     }
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000 + 330 * 60000).toISOString().slice(0, 10);
     try {
-      await api("POST", `/api/weddings/${id}/events`, {
+      const created = await api<{ id: string }>("POST", `/api/weddings/${id}/events`, {
         name: "New event",
         side: "BOTH",
         venue: "Venue to be announced",
@@ -152,6 +158,7 @@ export default function WeddingEditorPage() {
         designId: firstDesign.id,
       });
       await load(events.length);
+      setEditingEventId(created.id);
       setStatus({ kind: "ok", text: "Event added. Fill in its details and save." });
     } catch (failure) {
       reportFailure(failure);
@@ -165,6 +172,7 @@ export default function WeddingEditorPage() {
     }
     try {
       await api("DELETE", `/api/events/${event.id}`);
+      setEditingEventId((current) => (current === event.id ? null : current));
       await load(0);
       setStatus({ kind: "ok", text: `${event.name} deleted` });
     } catch (failure) {
@@ -203,6 +211,7 @@ export default function WeddingEditorPage() {
     }
     try {
       await api("PUT", `/api/weddings/${id}`, { ...couple, slug: wedding.slug });
+      setEditingCouple(false);
       setStatus({ kind: "ok", text: "Couple details saved" });
     } catch (failure) {
       setStatus({ kind: "error", text: failure instanceof Error ? failure.message : "could not save" });
@@ -223,6 +232,7 @@ export default function WeddingEditorPage() {
         note: event.note || null,
         designId: event.designId,
       });
+      setEditingEventId(null);
       setStatus({ kind: "ok", text: `${event.name} saved` });
     } catch (failure) {
       setStatus({ kind: "error", text: failure instanceof Error ? failure.message : "could not save" });
@@ -237,6 +247,7 @@ export default function WeddingEditorPage() {
   }
 
   const event: EventForm | undefined = events[selected];
+  const isEditingEvent = event !== undefined && editingEventId === event.id;
   const design = event ? pkg.designs.find((item) => item.id === event.designId) : undefined;
   const previewData: DesignData | null = event
     ? {
@@ -277,33 +288,41 @@ export default function WeddingEditorPage() {
 
       <section className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-lg font-semibold">Couple</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Groom name">
+        <fieldset disabled={!editingCouple} className="m-0 min-w-0 space-y-4 border-0 p-0">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Groom name">
+              <input
+                className={inputClass}
+                value={couple.groomName}
+                onChange={(e) => setCouple({ ...couple, groomName: e.target.value })}
+              />
+            </Field>
+            <Field label="Bride name">
+              <input
+                className={inputClass}
+                value={couple.brideName}
+                onChange={(e) => setCouple({ ...couple, brideName: e.target.value })}
+              />
+            </Field>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-stone-700">
             <input
-              className={inputClass}
-              value={couple.groomName}
-              onChange={(e) => setCouple({ ...couple, groomName: e.target.value })}
+              type="checkbox"
+              checked={couple.showDefaultPageWhenOff}
+              onChange={(e) => setCouple({ ...couple, showDefaultPageWhenOff: e.target.checked })}
             />
-          </Field>
-          <Field label="Bride name">
-            <input
-              className={inputClass}
-              value={couple.brideName}
-              onChange={(e) => setCouple({ ...couple, brideName: e.target.value })}
-            />
-          </Field>
-        </div>
-        <label className="flex items-center gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={couple.showDefaultPageWhenOff}
-            onChange={(e) => setCouple({ ...couple, showDefaultPageWhenOff: e.target.checked })}
-          />
-          Show a default page when a link is turned off
-        </label>
-        <button onClick={saveCouple} className="rounded-lg bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800">
-          Save couple
-        </button>
+            Show a default page when a link is turned off
+          </label>
+        </fieldset>
+        {editingCouple ? (
+          <button onClick={saveCouple} className="rounded-lg bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800">
+            Save couple
+          </button>
+        ) : (
+          <button onClick={() => setEditingCouple(true)} className={editButtonClass}>
+            Edit couple
+          </button>
+        )}
       </section>
 
       <section className="space-y-4">
@@ -332,8 +351,9 @@ export default function WeddingEditorPage() {
         {!event && <p className="text-sm text-stone-500">No events yet. Add the first one to get started.</p>}
 
         {event && previewData && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto]">
           <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+            <fieldset disabled={!isEditingEvent} className="m-0 min-w-0 space-y-4 border-0 p-0">
             <Field label="Event name">
               <input
                 className={inputClass}
@@ -394,10 +414,17 @@ export default function WeddingEditorPage() {
                   ))}
               </select>
             </Field>
+            </fieldset>
             <div className="flex gap-3">
-              <button onClick={saveEvent} className="rounded-lg bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800">
-                Save {event.name}
-              </button>
+              {isEditingEvent ? (
+                <button onClick={saveEvent} className="rounded-lg bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800">
+                  Save {event.name}
+                </button>
+              ) : (
+                <button onClick={() => setEditingEventId(event.id)} className={editButtonClass}>
+                  Edit {event.name}
+                </button>
+              )}
               <button onClick={deleteEvent} className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50">
                 Delete event
               </button>

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
-import { localInputToIso } from "@/lib/time";
+import { isoToLocalInput, localInputToIso } from "@/lib/time";
 
 type Side = "BRIDE" | "GROOM" | "BOTH";
 
@@ -13,6 +13,16 @@ export type LinkItem = {
   enabled: boolean;
   eventCount: number;
   url: string;
+};
+
+type LinkDetail = {
+  id: string;
+  type: "SUMMARY" | "SINGLE_EVENT";
+  side: Side;
+  audienceLabel: string | null;
+  designId: string | null;
+  customText: string | null;
+  events: { eventId: string; invitedBy: Side | null; startsAt: string | null }[];
 };
 
 type Selection = { on: boolean; startsAt: string; invitedBy: "" | Side };
@@ -41,6 +51,7 @@ export function LinkManager({
   const [selection, setSelection] = useState<Record<string, Selection>>({});
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   function selectionFor(id: string): Selection {
     return selection[id] ?? { on: false, startsAt: "", invitedBy: "" };
@@ -76,33 +87,74 @@ export function LinkManager({
     }
   }
 
-  async function create(event: FormEvent) {
+  function resetForm() {
+    setOpen(false);
+    setEditingId(null);
+    setType("SUMMARY");
+    setSide("BOTH");
+    setAudienceLabel("");
+    setCustomText("");
+    setDesignId(summaryDesigns[0]?.id ?? "");
+    setSelection({});
+  }
+
+  async function startEdit(link: LinkItem) {
+    setError(null);
+    try {
+      const detail = await api<LinkDetail>("GET", `/api/links/${link.id}`);
+      setType(detail.type);
+      setSide(detail.side);
+      setAudienceLabel(detail.audienceLabel ?? "");
+      setCustomText(detail.customText ?? "");
+      setDesignId(detail.designId ?? summaryDesigns[0]?.id ?? "");
+      setSelection(
+        Object.fromEntries(
+          detail.events.map((entry) => [
+            entry.eventId,
+            {
+              on: true,
+              startsAt: entry.startsAt ? isoToLocalInput(entry.startsAt) : "",
+              invitedBy: entry.invitedBy ?? "",
+            },
+          ]),
+        ),
+      );
+      setEditingId(link.id);
+      setOpen(true);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "something went wrong");
+    }
+  }
+
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const chosen = events.filter((item) => selectionFor(item.id).on);
     if (chosen.length === 0) {
       setError("Choose at least one event");
       return;
     }
+    const body = {
+      type,
+      side,
+      audienceLabel: audienceLabel || null,
+      designId: type === "SUMMARY" ? designId : null,
+      customText: customText || null,
+      events: chosen.map((item) => {
+        const picked = selectionFor(item.id);
+        return {
+          eventId: item.id,
+          invitedBy: picked.invitedBy || null,
+          startsAt: picked.startsAt ? localInputToIso(picked.startsAt) : null,
+        };
+      }),
+    };
     await run(async () => {
-      await api("POST", `/api/weddings/${weddingId}/links`, {
-        type,
-        side,
-        audienceLabel: audienceLabel || null,
-        designId: type === "SUMMARY" ? designId : null,
-        customText: customText || null,
-        events: chosen.map((item) => {
-          const picked = selectionFor(item.id);
-          return {
-            eventId: item.id,
-            invitedBy: picked.invitedBy || null,
-            startsAt: picked.startsAt ? localInputToIso(picked.startsAt) : null,
-          };
-        }),
-      });
-      setOpen(false);
-      setAudienceLabel("");
-      setCustomText("");
-      setSelection({});
+      if (editingId) {
+        await api("PUT", `/api/links/${editingId}`, body);
+      } else {
+        await api("POST", `/api/weddings/${weddingId}/links`, body);
+      }
+      resetForm();
     });
   }
 
@@ -121,7 +173,7 @@ export function LinkManager({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Invite links</h2>
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => (open ? resetForm() : setOpen(true))}
           disabled={events.length === 0}
           className="rounded-lg border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-100 disabled:opacity-50"
         >
@@ -131,7 +183,8 @@ export function LinkManager({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {open && (
-        <form onSubmit={create} className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+        <form onSubmit={submit} className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+          {editingId && <p className="text-sm font-medium text-stone-700">Editing link</p>}
           <div className="flex gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input type="radio" checked={type === "SUMMARY"} onChange={() => changeType("SUMMARY")} />
@@ -189,19 +242,19 @@ export function LinkManager({
                   </label>
                   {picked.on && (
                     <>
-                      <label className="flex items-center gap-2 text-stone-600">
+                      <label className="flex flex-wrap items-center gap-2 text-stone-600">
                         Time for this link
                         <input
                           type="datetime-local"
-                          className="rounded-lg border border-stone-300 px-2 py-1"
+                          className="max-w-full rounded-lg border border-stone-300 px-2 py-1"
                           value={picked.startsAt}
                           onChange={(e) => update(item.id, { startsAt: e.target.value })}
                         />
                       </label>
-                      <label className="flex items-center gap-2 text-stone-600">
+                      <label className="flex flex-wrap items-center gap-2 text-stone-600">
                         Invited by
                         <select
-                          className="rounded-lg border border-stone-300 px-2 py-1"
+                          className="max-w-full rounded-lg border border-stone-300 px-2 py-1"
                           value={picked.invitedBy}
                           onChange={(e) => update(item.id, { invitedBy: e.target.value as "" | Side })}
                         >
@@ -218,7 +271,7 @@ export function LinkManager({
             })}
           </div>
           <button type="submit" className="rounded-lg bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800">
-            Create link
+            {editingId ? "Save changes" : "Create link"}
           </button>
         </form>
       )}
@@ -235,13 +288,16 @@ export function LinkManager({
             <a href={link.url} target="_blank" rel="noreferrer" className="break-all text-amber-700 hover:underline">
               {link.url}
             </a>
-            <span className="ml-auto flex gap-2">
-              <button onClick={() => copy(link)} className="rounded-lg border border-stone-300 px-2 py-1 hover:bg-stone-100">
+            <span className="ml-auto flex flex-wrap gap-2">
+              <button onClick={() => startEdit(link)} className="rounded-lg border border-stone-300 px-3 py-1.5 hover:bg-stone-100">
+                Edit
+              </button>
+              <button onClick={() => copy(link)} className="rounded-lg border border-stone-300 px-3 py-1.5 hover:bg-stone-100">
                 {copied === link.id ? "Copied" : "Copy"}
               </button>
               <button
                 onClick={() => run(() => api("PUT", `/api/links/${link.id}/enabled`, { enabled: !link.enabled }))}
-                className="rounded-lg border border-stone-300 px-2 py-1 hover:bg-stone-100"
+                className="rounded-lg border border-stone-300 px-3 py-1.5 hover:bg-stone-100"
               >
                 {link.enabled ? "Turn off" : "Turn on"}
               </button>
@@ -251,7 +307,7 @@ export function LinkManager({
                     run(() => api("DELETE", `/api/links/${link.id}`));
                   }
                 }}
-                className="rounded-lg border border-red-300 px-2 py-1 text-red-700 hover:bg-red-50"
+                className="rounded-lg border border-red-300 px-3 py-1.5 text-red-700 hover:bg-red-50"
               >
                 Delete
               </button>

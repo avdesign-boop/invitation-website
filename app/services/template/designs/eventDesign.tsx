@@ -21,7 +21,7 @@ export function makeEventDesign(theme: EventTheme): DesignComponent {
         <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
           <Reveal>
             <p className={`text-sm uppercase tracking-[0.3em] ${theme.accent}`}>You are invited to</p>
-            <h1 className="mt-4 font-serif text-5xl">{event.name}</h1>
+            <h1 className="mt-4 font-serif text-4xl sm:text-5xl">{event.name}</h1>
             <p className="mt-6 font-serif text-2xl">
               {data.groomName} &amp; {data.brideName}
             </p>

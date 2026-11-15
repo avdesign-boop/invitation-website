@@ -17,7 +17,7 @@ export function makeSummaryDesign(theme: SummaryTheme): DesignComponent {
         <div className="mx-auto max-w-md">
           <Reveal className="text-center">
             <p className={`text-sm uppercase tracking-[0.3em] ${theme.accent}`}>{theme.greeting}</p>
-            <h1 className="mt-4 font-serif text-5xl">
+            <h1 className="mt-4 font-serif text-4xl sm:text-5xl">
               {data.groomName} &amp; {data.brideName}
             </h1>
             {data.customText && <p className="mt-6 opacity-80">{data.customText}</p>}
