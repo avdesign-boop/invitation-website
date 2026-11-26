@@ -10,6 +10,11 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+export const verifyDeviceSchema = z.object({
+  challengeId: z.string().min(1).max(100),
+  code: z.string().regex(/^\d{6}$/),
+});
+
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().email().max(200),
 });

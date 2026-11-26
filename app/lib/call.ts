@@ -6,6 +6,7 @@ export type OperationMeta = {
   schema?: ZodType;
   idParam?: string;
   sessionInput?: boolean;
+  deviceInput?: boolean;
   clearSession?: boolean;
   status?: number;
   message?: string;

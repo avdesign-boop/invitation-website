@@ -4,6 +4,9 @@
 - **Business:** id, name, unique email, password hash, email verified time.
 - **MagicLink:** business, hashed token, purpose (SIGNUP or RESET), expiry, used time.
 - **Session:** business, hashed session id, expiry.
+- **TrustedDevice:** business, hashed device id, browser description, verified time, last used time, created time.
+- **LoginChallenge:** business, hashed code, expiry, wrong-attempt count, used time.
+- **LoginEvent:** business, result (SUCCESS, CODE_SENT, CODE_VERIFIED, WRONG_PASSWORD, WRONG_CODE), time, IP address, browser description, device (optional).
 - **Package:** name, description, preview image URL, active flag.
 - **Design:** package, unique `key` (the coded page), name, kind (EVENT or SUMMARY), event type (EVENT designs only), guest type (SUMMARY designs only), preview image URL, active flag.
 - **Plan:** name, monthly price, currency, wedding limit, Stripe price id, active flag.
@@ -16,6 +19,7 @@
 
 ## Rules
 - Sessions are random IDs in the `session` cookie, stored hashed in the Session table. The Entry layer checks them with `business.validateSession` and passes the business id to services.
+- A login on a browser that is not a trusted device needs a 6-digit code emailed to the account. A trusted device is a browser with a valid `device` cookie, approved within the last 30 days. Each account trusts at most 3 devices, and approving a fourth replaces the least recently used. Setting a new password removes all trusted devices.
 - Deleting a wedding is one endpoint. It removes the wedding's invite links and the wedding together, all or nothing.
 - Time shown for an event on a link: the link's `startsAt` override if set, else the event's default.
 - Invited by for an event on a link: the per-event value if set, else the link's default.

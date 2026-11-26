@@ -38,7 +38,8 @@ Environment settings turn features on or off with no code changes:
 - `SIGNUP_ENABLED` (default on): off blocks business sign-up.
 - `BILLING_ENABLED` (default on): off lets every business create weddings and does not use Stripe.
 - `LOGIN_HINT_EMAIL` and `LOGIN_HINT_PASSWORD` (default unset): when both are set, the login page shows that account with a button that fills it in.
-- `RESEND_API_KEY` and `EMAIL_FROM`: when unset, magic links are printed in the server log.
+- `DEVICE_VERIFICATION_ENABLED` (default on): off skips the emailed code that a new browser needs at login.
+- `RESEND_API_KEY` and `EMAIL_FROM`: when unset, magic links and login codes are printed in the server log.
 
 A demo is one combination of these settings plus the sample data in `app/demo/`. See `planning/demo.md`.
 
@@ -55,6 +56,6 @@ A demo is one combination of these settings plus the sample data in `app/demo/`.
 
 ## Open decisions
 - Launch domain setup and CDN
-- Security, scaling and deployment
+- Hosting and security: see `planning/hosting-and-security.md`
 - How packages are priced
 - Startup name and domain

@@ -11,10 +11,14 @@ type LoginSettings = {
   loginHint: { email: string; password: string } | null;
 };
 
+type LoginResponse = { business: { id: string } } | { verificationRequired: true; challengeId: string };
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [challengeId, setChallengeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState<LoginSettings>({ signupEnabled: true, loginHint: null });
@@ -30,12 +34,69 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await api("POST", "/api/business/login", { email, password });
+      const result = await api<LoginResponse>("POST", "/api/business/login", { email, password });
+      if ("verificationRequired" in result) {
+        setChallengeId(result.challengeId);
+        setCode("");
+        setBusy(false);
+        return;
+      }
       router.replace("/dashboard");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "something went wrong");
       setBusy(false);
     }
+  }
+
+  async function verify(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await api("POST", "/api/business/verify-device", { challengeId, code });
+      router.replace("/dashboard");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "something went wrong");
+      setBusy(false);
+    }
+  }
+
+  function startOver() {
+    setChallengeId(null);
+    setCode("");
+    setPassword("");
+    setError(null);
+  }
+
+  if (challengeId) {
+    return (
+      <AuthCard title="Check your email">
+        <form onSubmit={verify} className="space-y-4">
+          <p className="text-sm text-stone-600">
+            We do not recognise this browser. We sent a 6-digit code to the email address on this account. Enter it
+            to continue.
+          </p>
+          <label className="block text-sm text-stone-700">
+            Code
+            <input
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              className={authInputClass}
+            />
+          </label>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <AuthButton busy={busy} label="Verify and sign in" busyLabel="Checking..." />
+        </form>
+        <button type="button" onClick={startOver} className="text-sm text-amber-700 hover:underline">
+          Back to sign in
+        </button>
+      </AuthCard>
+    );
   }
 
   const hint = settings.loginHint;

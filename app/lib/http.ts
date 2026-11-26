@@ -5,9 +5,13 @@ import { call, getOperationMeta, type OperationMeta, type Operations } from "@/l
 import { AppError } from "@/lib/errors";
 import {
   clearSessionCookie,
+  readClientIp,
+  readDeviceId,
   readSessionId,
   requireBusinessId,
+  setDeviceCookie,
   setSessionCookie,
+  type DeviceGrant,
   type SessionGrant,
 } from "@/services/entry/session";
 
@@ -56,9 +60,14 @@ function respond(result: unknown, meta: OperationMeta): NextResponse {
   }
   let payload = result;
   let session: SessionGrant | undefined;
-  if (typeof result === "object" && result !== null && "session" in result) {
-    const { session: granted, ...rest } = result as { session: SessionGrant };
-    session = granted;
+  let device: DeviceGrant | undefined;
+  if (typeof result === "object" && result !== null && ("session" in result || "device" in result)) {
+    const { session: grantedSession, device: grantedDevice, ...rest } = result as {
+      session?: SessionGrant;
+      device?: DeviceGrant;
+    };
+    session = grantedSession;
+    device = grantedDevice;
     payload = rest;
   }
   const response = NextResponse.json(meta.message ? { message: meta.message } : payload, {
@@ -66,6 +75,9 @@ function respond(result: unknown, meta: OperationMeta): NextResponse {
   });
   if (session) {
     setSessionCookie(response, session);
+  }
+  if (device) {
+    setDeviceCookie(response, device);
   }
   if (meta.clearSession) {
     clearSessionCookie(response);
@@ -85,6 +97,11 @@ function route(operation: keyof Operations, authenticated: boolean) {
     }
     if (meta.sessionInput) {
       input.sessionId = readSessionId(request) ?? "";
+    }
+    if (meta.deviceInput) {
+      input.deviceId = readDeviceId(request);
+      input.ip = readClientIp(request);
+      input.userAgent = request.headers.get("user-agent") ?? undefined;
     }
     Object.assign(input, await readInput(request, meta));
     const result = await call(operation, input as never);

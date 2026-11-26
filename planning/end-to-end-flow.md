@@ -9,7 +9,8 @@ Every request from the browser enters through the Entry layer. For dashboard cal
 | Sign up | POST /api/business/signup { name, email } | `business.signup` creates the Business and a SIGNUP MagicLink, then sends the email |
 | Open the emailed link | Browser opens the set-password page | none |
 | Set password | POST /api/business/set-password { token, password } | `business.setPassword` checks the token (unused, not expired), saves the password hash, marks the email verified, ends the business's existing sessions |
-| Log in | POST /api/business/login { email, password } | `business.login` checks the password and creates a Session. The Entry layer sets its ID in the session cookie |
+| Log in | POST /api/business/login { email, password } | `business.login` checks the password. On a trusted device it creates a Session and the Entry layer sets its ID in the session cookie. On any other browser it emails a 6-digit code and answers `verificationRequired` |
+| Verify the browser | POST /api/business/verify-device { challengeId, code } | `business.verifyDevice` checks the code, trusts the browser (at most 3 devices per account), and creates a Session. The Entry layer sets the session and device cookies |
 | See plans | GET /api/billing/plans | `billing.listPlans` |
 | Choose a plan | POST /api/billing/checkout { planId } | `billing.createCheckout` creates the Stripe checkout and returns its URL |
 | Pay | The browser goes to Stripe | none |

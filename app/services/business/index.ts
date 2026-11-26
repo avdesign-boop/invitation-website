@@ -1,7 +1,13 @@
 import { register } from "@/lib/call";
 import * as service from "./service";
-import { forgotPasswordSchema, loginSchema, setPasswordSchema, signupSchema } from "./schemas";
-import type { BusinessSummary } from "./types";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  setPasswordSchema,
+  signupSchema,
+  verifyDeviceSchema,
+} from "./schemas";
+import type { BusinessSummary, LoginOutput, RequestContext, VerifyDeviceOutput } from "./types";
 
 declare module "@/lib/call" {
   interface Operations {
@@ -9,8 +15,12 @@ declare module "@/lib/call" {
     "business.forgotPassword": { input: { email: string }; output: { ok: true } };
     "business.setPassword": { input: { token: string; password: string }; output: { ok: true } };
     "business.login": {
-      input: { email: string; password: string };
-      output: { business: BusinessSummary; session: { id: string; expiresAt: Date } };
+      input: { email: string; password: string } & RequestContext;
+      output: LoginOutput;
+    };
+    "business.verifyDevice": {
+      input: { challengeId: string; code: string } & RequestContext;
+      output: VerifyDeviceOutput;
     };
     "business.logout": { input: { sessionId: string }; output: { ok: true } };
     "business.validateSession": {
@@ -30,7 +40,11 @@ register("business.setPassword", service.setPassword, {
   schema: setPasswordSchema,
   message: "password set",
 });
-register("business.login", service.login, { schema: loginSchema });
+register("business.login", service.login, { schema: loginSchema, deviceInput: true });
+register("business.verifyDevice", service.verifyDevice, {
+  schema: verifyDeviceSchema,
+  deviceInput: true,
+});
 register("business.logout", service.logout, {
   sessionInput: true,
   clearSession: true,

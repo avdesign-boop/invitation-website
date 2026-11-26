@@ -17,14 +17,17 @@ enum MagicLinkPurpose {
 }
 
 model Business {
-  id              String      @id @default(cuid())
+  id              String           @id @default(cuid())
   name            String
-  email           String      @unique
+  email           String           @unique
   passwordHash    String?
   emailVerifiedAt DateTime?
-  createdAt       DateTime    @default(now())
+  createdAt       DateTime         @default(now())
   magicLinks      MagicLink[]
   sessions        Session[]
+  trustedDevices  TrustedDevice[]
+  loginChallenges LoginChallenge[]
+  loginEvents     LoginEvent[]
 
   @@schema("business")
 }
@@ -50,6 +53,57 @@ model Session {
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 
+  @@schema("business")
+}
+
+enum LoginResult {
+  SUCCESS
+  CODE_SENT
+  CODE_VERIFIED
+  WRONG_PASSWORD
+  WRONG_CODE
+
+  @@schema("business")
+}
+
+model TrustedDevice {
+  id          String   @id @default(cuid())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  deviceHash  String   @unique
+  description String
+  verifiedAt  DateTime
+  lastUsedAt  DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([businessId])
+  @@schema("business")
+}
+
+model LoginChallenge {
+  id         String    @id
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@schema("business")
+}
+
+model LoginEvent {
+  id          String      @id @default(cuid())
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  result      LoginResult
+  ip          String?
+  description String?
+  deviceId    String?
+  createdAt   DateTime    @default(now())
+
+  @@index([businessId, createdAt])
   @@schema("business")
 }
 

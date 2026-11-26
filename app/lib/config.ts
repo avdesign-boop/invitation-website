@@ -16,6 +16,10 @@ export function billingEnabled(): boolean {
   return flag("BILLING_ENABLED", true);
 }
 
+export function deviceVerificationEnabled(): boolean {
+  return flag("DEVICE_VERIFICATION_ENABLED", true);
+}
+
 export function loginHint(): { email: string; password: string } | null {
   const email = process.env.LOGIN_HINT_EMAIL?.trim();
   const password = process.env.LOGIN_HINT_PASSWORD;
